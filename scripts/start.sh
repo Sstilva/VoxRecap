@@ -19,16 +19,18 @@ fi
 echo "==> ensuring submodules are initialised"
 git submodule update --init --recursive
 
-# Force the legacy Docker builder. Buildx + Docker Desktop's containerd
-# image store can hang indefinitely on the "resolving provenance for
-# metadata file" export step. The legacy builder doesn't generate
-# attestations and is plenty fast for a local stack.
-export DOCKER_BUILDKIT=0
-export COMPOSE_DOCKER_CLI_BUILD=0
+# Disable buildx provenance/SBOM attestations: on Docker Desktop with the
+# containerd image store these can hang the export step indefinitely
+# ("resolving provenance for metadata file"). They aren't needed locally.
+# BuildKit (default) is kept on so we get live progress and proper layer
+# caching across rebuilds.
 export BUILDX_NO_DEFAULT_ATTESTATIONS=1
+# Stable project name regardless of where the script is invoked from
+# (worktree vs. main checkout) — keeps image cache reusable.
+export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-voxrecap}"
 
-echo "==> building containers (legacy builder)"
-docker compose build --pull
+echo "==> building containers (BuildKit, no attestations)"
+docker compose build --pull --progress=plain
 
 echo "==> starting stack"
 docker compose up -d
