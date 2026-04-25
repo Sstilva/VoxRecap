@@ -1,0 +1,9 @@
+[submodule "ui"]
+	path = ui
+	url = https://github.com/eruph/voxrecap-app-web.git
+[submodule "api"]
+	path = api
+	url = https://github.com/eruph/voxrecap-app-api.git
+[submodule "worker"]
+	path = worker
+	url = https://github.com/eruph/voxrecap-app-worker.git
