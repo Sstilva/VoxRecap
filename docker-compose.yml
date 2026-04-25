@@ -1,0 +1,43 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ./api
+    environment:
+      VOXRECAP_REDIS_URL: redis://redis:6379/0
+      VOXRECAP_CELERY_BROKER_URL: redis://redis:6379/1
+      VOXRECAP_CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: ./worker
+    environment:
+      VOXRECAP_REDIS_URL: redis://redis:6379/0
+      VOXRECAP_CELERY_BROKER_URL: redis://redis:6379/1
+      VOXRECAP_CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  ui:
+    build:
+      context: ./ui
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
